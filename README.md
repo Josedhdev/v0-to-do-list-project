@@ -1,9 +1,6 @@
 # v0-to-do-list-project
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
-
-
-You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+This is a [Next.js](https://nextjs.org)
 
 
 ## Getting Started
