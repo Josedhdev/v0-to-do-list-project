@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gestor de Tareas - Aplicación moderna para organizar tus tareas diarias">
+    <meta name="theme-color" content="#0f0f0f">
+    <title>TaskFlow - Gestor de Tareas</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✓</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1 class="app-title">TaskFlow</h1>
+            <p class="app-subtitle">Organiza tu día, alcanza tus metas</p>
+        </header>
+
+        <!-- Formulario para agregar tareas -->
+        <form id="taskForm" class="task-form">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="taskInput" 
+                    class="task-input" 
+                    placeholder="¿Qué necesitas hacer hoy?"
+                    maxlength="500"
+                    autocomplete="off"
+                    aria-label="Nueva tarea"
+                >
+                <select 
+                    id="prioritySelect" 
+                    class="priority-select"
+                    aria-label="Prioridad de la tarea"
+                >
+                    <option value="alta">🔴 Alta</option>
+                    <option value="media" selected>🟡 Media</option>
+                    <option value="baja">🔵 Baja</option>
+                </select>
+                <button type="submit" class="add-btn" aria-label="Agregar tarea">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Agregar</span>
+                </button>
+            </div>
+        </form>
+
+        <!-- Filtros y estadísticas -->
+        <div class="filters-container">
+            <div class="filter-buttons" role="group" aria-label="Filtros de tareas">
+                <button class="filter-btn active" data-filter="all">Todas</button>
+                <button class="filter-btn" data-filter="pending">Pendientes</button>
+                <button class="filter-btn" data-filter="completed">Completadas</button>
+            </div>
+            <div class="stats-container">
+                <div class="stat-item">
+                    <span class="stat-dot pending"></span>
+                    <span id="pendingCount" class="stat-number">0</span>
+                    <span>pendientes</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-dot completed"></span>
+                    <span id="completedCount" class="stat-number">0</span>
+                    <span>completadas</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenedor de tareas -->
+        <div id="tasksContainer" class="tasks-container">
+            <!-- Lista de tareas -->
+            <ul id="taskList" class="task-list" aria-label="Lista de tareas">
+                <!-- Las tareas se renderizan dinámicamente -->
+            </ul>
+
+            <!-- Estado vacío -->
+            <div id="emptyState" class="empty-state hidden">
+                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                </svg>
+                <h3 class="empty-title">No tienes tareas</h3>
+                <p class="empty-subtitle">Agrega tu primera tarea para comenzar</p>
+            </div>
+
+            <!-- Acciones masivas -->
+            <div id="bulkActions" class="bulk-actions hidden">
+                <span class="text-sm text-gray-400">Acciones:</span>
+                <button id="clearCompletedBtn" class="bulk-btn">
+                    Eliminar completadas
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal">
+            <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <h2 id="modalTitle" class="modal-title">¿Estás seguro?</h2>
+            <p id="modalMessage" class="modal-message">Esta acción no se puede deshacer.</p>
+            <div class="modal-actions">
+                <button id="modalCancel" class="modal-btn cancel">Cancelar</button>
+                <button id="modalConfirm" class="modal-btn confirm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor de notificaciones toast -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <!-- Scripts -->
+    <script src="todoModel.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
