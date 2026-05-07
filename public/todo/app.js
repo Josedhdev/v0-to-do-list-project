@@ -3,7 +3,7 @@
  * Maneja todas las interacciones del DOM y se comunica con TodoModel
  * 
  * @author Sistema de Gestión de Tareas
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 class TodoApp {
@@ -17,8 +17,18 @@ class TodoApp {
         // Filtro actual activo
         this.currentFilter = 'all';
         
+        // Búsqueda actual
+        this.currentSearch = '';
+        
+        // Etiqueta filtrada actualmente
+        this.currentTagFilter = '';
+        
         // Tarea en edición
         this.editingTaskId = null;
+        
+        // Drag and Drop
+        this.draggedElement = null;
+        this.draggedTaskId = null;
         
         // Caché de elementos del DOM
         this.elements = {};
@@ -44,6 +54,9 @@ class TodoApp {
             taskForm: document.getElementById('taskForm'),
             taskInput: document.getElementById('taskInput'),
             prioritySelect: document.getElementById('prioritySelect'),
+            dueDateInput: document.getElementById('dueDateInput'),
+            tagsInput: document.getElementById('tagsInput'),
+            searchInput: document.getElementById('searchInput'),
             taskList: document.getElementById('taskList'),
             tasksContainer: document.getElementById('tasksContainer'),
             emptyState: document.getElementById('emptyState'),
@@ -57,7 +70,19 @@ class TodoApp {
             modalMessage: document.getElementById('modalMessage'),
             modalConfirm: document.getElementById('modalConfirm'),
             modalCancel: document.getElementById('modalCancel'),
-            toastContainer: document.getElementById('toastContainer')
+            toastContainer: document.getElementById('toastContainer'),
+            // Estadísticas
+            statsPanel: document.getElementById('statsPanel'),
+            statTotal: document.getElementById('statTotal'),
+            statCompletion: document.getElementById('statCompletion'),
+            statHigh: document.getElementById('statHigh'),
+            statMedium: document.getElementById('statMedium'),
+            statLow: document.getElementById('statLow'),
+            statOverdue: document.getElementById('statOverdue'),
+            progressBar: document.getElementById('progressBar'),
+            // Etiquetas
+            tagsList: document.getElementById('tagsList'),
+            clearTagFilter: document.getElementById('clearTagFilter')
         };
     }
 
@@ -71,6 +96,14 @@ class TodoApp {
             this.handleAddTask();
         });
 
+        // Búsqueda en tiempo real
+        if (this.elements.searchInput) {
+            this.elements.searchInput.addEventListener('input', (e) => {
+                this.currentSearch = e.target.value;
+                this.renderTasks();
+            });
+        }
+
         // Filtros
         this.elements.filterButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -82,6 +115,16 @@ class TodoApp {
         this.elements.clearCompletedBtn.addEventListener('click', () => {
             this.handleClearCompleted();
         });
+
+        // Limpiar filtro de etiqueta
+        if (this.elements.clearTagFilter) {
+            this.elements.clearTagFilter.addEventListener('click', () => {
+                this.currentTagFilter = '';
+                this.elements.clearTagFilter.classList.add('hidden');
+                this.renderTasks();
+                this.renderTagsList();
+            });
+        }
 
         // Eventos del modal
         this.elements.modalCancel.addEventListener('click', () => {
@@ -104,6 +147,23 @@ class TodoApp {
             this.handleTaskListKeydown(e);
         });
 
+        // Drag and Drop eventos
+        this.elements.taskList.addEventListener('dragstart', (e) => {
+            this.handleDragStart(e);
+        });
+
+        this.elements.taskList.addEventListener('dragend', (e) => {
+            this.handleDragEnd(e);
+        });
+
+        this.elements.taskList.addEventListener('dragover', (e) => {
+            this.handleDragOver(e);
+        });
+
+        this.elements.taskList.addEventListener('drop', (e) => {
+            this.handleDrop(e);
+        });
+
         // Atajos de teclado globales
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -121,12 +181,22 @@ class TodoApp {
     handleAddTask() {
         const text = this.elements.taskInput.value;
         const priority = this.elements.prioritySelect.value;
+        const dueDate = this.elements.dueDateInput ? this.elements.dueDateInput.value : null;
+        const tagsValue = this.elements.tagsInput ? this.elements.tagsInput.value : '';
+        
+        // Parsear etiquetas separadas por coma
+        const tags = tagsValue
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(tag => tag.length > 0);
 
-        const result = this.model.addTask(text, priority);
+        const result = this.model.addTask(text, priority, dueDate || null, tags);
 
         if (result.success) {
             this.elements.taskInput.value = '';
             this.elements.prioritySelect.value = 'media';
+            if (this.elements.dueDateInput) this.elements.dueDateInput.value = '';
+            if (this.elements.tagsInput) this.elements.tagsInput.value = '';
             this.elements.taskInput.focus();
             this.showToast('Tarea agregada correctamente', 'success');
             this.render();
@@ -149,6 +219,26 @@ class TodoApp {
         });
         
         this.renderTasks();
+    }
+
+    /**
+     * Maneja el filtro por etiqueta
+     * @param {string} tag - Etiqueta a filtrar
+     */
+    handleTagFilter(tag) {
+        if (this.currentTagFilter === tag) {
+            this.currentTagFilter = '';
+            if (this.elements.clearTagFilter) {
+                this.elements.clearTagFilter.classList.add('hidden');
+            }
+        } else {
+            this.currentTagFilter = tag;
+            if (this.elements.clearTagFilter) {
+                this.elements.clearTagFilter.classList.remove('hidden');
+            }
+        }
+        this.renderTasks();
+        this.renderTagsList();
     }
 
     /**
@@ -192,6 +282,15 @@ class TodoApp {
             this.cancelEdit();
             return;
         }
+
+        // Click en etiqueta
+        if (target.closest('.task-tag')) {
+            const tag = target.closest('.task-tag').dataset.tag;
+            if (tag) {
+                this.handleTagFilter(tag);
+            }
+            return;
+        }
     }
 
     /**
@@ -208,6 +307,84 @@ class TodoApp {
                 this.cancelEdit();
             }
         }
+    }
+
+    /**
+     * Maneja el inicio del Drag
+     * @param {DragEvent} e - Evento de drag
+     */
+    handleDragStart(e) {
+        const taskItem = e.target.closest('.task-item');
+        if (!taskItem) return;
+        
+        this.draggedElement = taskItem;
+        this.draggedTaskId = taskItem.dataset.id;
+        
+        taskItem.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', taskItem.dataset.id);
+    }
+
+    /**
+     * Maneja el fin del Drag
+     * @param {DragEvent} e - Evento de drag
+     */
+    handleDragEnd(e) {
+        const taskItem = e.target.closest('.task-item');
+        if (taskItem) {
+            taskItem.classList.remove('dragging');
+        }
+        
+        // Limpiar todas las clases de drag-over
+        document.querySelectorAll('.drag-over').forEach(el => {
+            el.classList.remove('drag-over');
+        });
+        
+        this.draggedElement = null;
+        this.draggedTaskId = null;
+    }
+
+    /**
+     * Maneja el Drag Over
+     * @param {DragEvent} e - Evento de drag
+     */
+    handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        
+        const taskItem = e.target.closest('.task-item');
+        if (!taskItem || taskItem === this.draggedElement) return;
+        
+        // Limpiar otras clases drag-over
+        document.querySelectorAll('.drag-over').forEach(el => {
+            if (el !== taskItem) el.classList.remove('drag-over');
+        });
+        
+        taskItem.classList.add('drag-over');
+    }
+
+    /**
+     * Maneja el Drop
+     * @param {DragEvent} e - Evento de drop
+     */
+    handleDrop(e) {
+        e.preventDefault();
+        
+        const targetItem = e.target.closest('.task-item');
+        if (!targetItem || !this.draggedTaskId) return;
+        
+        const targetId = targetItem.dataset.id;
+        
+        if (this.draggedTaskId !== targetId) {
+            const result = this.model.reorderTasksById(this.draggedTaskId, targetId);
+            
+            if (result.success) {
+                this.showToast('Tarea reordenada', 'success');
+                this.renderTasks();
+            }
+        }
+        
+        targetItem.classList.remove('drag-over');
     }
 
     /**
@@ -262,8 +439,8 @@ class TodoApp {
         }
 
         this.showModal(
-            '¿Eliminar tareas completadas?',
-            `Se eliminarán ${completedCount} tarea${completedCount > 1 ? 's' : ''} completada${completedCount > 1 ? 's' : ''}. Esta acción no se puede deshacer.`,
+            'Eliminar tareas completadas?',
+            `Se eliminaran ${completedCount} tarea${completedCount > 1 ? 's' : ''} completada${completedCount > 1 ? 's' : ''}. Esta accion no se puede deshacer.`,
             () => {
                 const result = this.model.deleteCompletedTasks();
                 
@@ -334,13 +511,23 @@ class TodoApp {
         this.renderTasks();
         this.renderStats();
         this.renderBulkActions();
+        this.renderTagsList();
     }
 
     /**
      * Renderiza la lista de tareas
      */
     renderTasks() {
-        const tasks = this.model.getFilteredTasks(this.currentFilter);
+        let tasks;
+        
+        // Aplicar búsqueda si hay texto
+        if (this.currentSearch) {
+            tasks = this.model.searchTasks(this.currentSearch, this.currentFilter);
+        } else if (this.currentTagFilter) {
+            tasks = this.model.filterByTag(this.currentTagFilter, this.currentFilter);
+        } else {
+            tasks = this.model.getFilteredTasks(this.currentFilter);
+        }
         
         if (tasks.length === 0) {
             this.elements.taskList.innerHTML = '';
@@ -359,18 +546,26 @@ class TodoApp {
         const title = this.elements.emptyState.querySelector('.empty-title');
         const subtitle = this.elements.emptyState.querySelector('.empty-subtitle');
         
-        switch (this.currentFilter) {
-            case 'pending':
-                title.textContent = '¡Excelente trabajo!';
-                subtitle.textContent = 'No tienes tareas pendientes';
-                break;
-            case 'completed':
-                title.textContent = 'Sin tareas completadas';
-                subtitle.textContent = 'Completa algunas tareas para verlas aquí';
-                break;
-            default:
-                title.textContent = 'No tienes tareas';
-                subtitle.textContent = 'Agrega tu primera tarea para comenzar';
+        if (this.currentSearch) {
+            title.textContent = 'Sin resultados';
+            subtitle.textContent = `No se encontraron tareas con "${this.currentSearch}"`;
+        } else if (this.currentTagFilter) {
+            title.textContent = 'Sin tareas';
+            subtitle.textContent = `No hay tareas con la etiqueta "${this.currentTagFilter}"`;
+        } else {
+            switch (this.currentFilter) {
+                case 'pending':
+                    title.textContent = 'Excelente trabajo!';
+                    subtitle.textContent = 'No tienes tareas pendientes';
+                    break;
+                case 'completed':
+                    title.textContent = 'Sin tareas completadas';
+                    subtitle.textContent = 'Completa algunas tareas para verlas aqui';
+                    break;
+                default:
+                    title.textContent = 'No tienes tareas';
+                    subtitle.textContent = 'Agrega tu primera tarea para comenzar';
+            }
         }
     }
 
@@ -382,10 +577,47 @@ class TodoApp {
     createTaskHTML(task) {
         const isEditing = this.editingTaskId === task.id;
         const createdDate = this.formatDate(task.createdAt);
+        const dueDateStatus = this.model.getDueDateStatus(task.dueDate);
+        
+        // Generar HTML para las etiquetas
+        const tagsHTML = task.tags && task.tags.length > 0
+            ? task.tags.map(tag => `
+                <span class="task-tag ${this.currentTagFilter === tag ? 'active' : ''}" data-tag="${this.escapeHTML(tag)}">
+                    ${this.escapeHTML(tag)}
+                </span>
+            `).join('')
+            : '';
+        
+        // Generar HTML para la fecha límite
+        let dueDateHTML = '';
+        if (task.dueDate) {
+            const dueDateFormatted = this.formatDueDate(task.dueDate);
+            let dueDateClass = 'due-date';
+            
+            if (!task.completed) {
+                if (dueDateStatus.status === 'overdue') {
+                    dueDateClass += ' overdue';
+                } else if (dueDateStatus.status === 'warning') {
+                    dueDateClass += ' warning';
+                }
+            }
+            
+            dueDateHTML = `
+                <span class="${dueDateClass}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    ${dueDateFormatted}
+                </span>
+            `;
+        }
         
         if (isEditing) {
             return `
-                <li class="task-item editing" data-id="${task.id}">
+                <li class="task-item editing" data-id="${task.id}" draggable="false">
                     <label class="task-checkbox">
                         <input type="checkbox" ${task.completed ? 'checked' : ''} disabled>
                         <span class="checkmark"></span>
@@ -409,7 +641,17 @@ class TodoApp {
         }
         
         return `
-            <li class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}">
+            <li class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}" draggable="true">
+                <div class="drag-handle" title="Arrastrar para reordenar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="9" cy="5" r="1"></circle>
+                        <circle cx="9" cy="12" r="1"></circle>
+                        <circle cx="9" cy="19" r="1"></circle>
+                        <circle cx="15" cy="5" r="1"></circle>
+                        <circle cx="15" cy="12" r="1"></circle>
+                        <circle cx="15" cy="19" r="1"></circle>
+                    </svg>
+                </div>
                 <label class="task-checkbox">
                     <input type="checkbox" ${task.completed ? 'checked' : ''}>
                     <span class="checkmark"></span>
@@ -424,8 +666,10 @@ class TodoApp {
                             </svg>
                             ${createdDate}
                         </span>
+                        ${dueDateHTML}
                         <span class="task-priority priority-${task.priority}">${task.priority}</span>
                     </div>
+                    ${tagsHTML ? `<div class="task-tags">${tagsHTML}</div>` : ''}
                 </div>
                 <div class="task-actions">
                     <button class="action-btn edit-btn" title="Editar tarea">
@@ -446,12 +690,64 @@ class TodoApp {
     }
 
     /**
-     * Renderiza las estadísticas
+     * Renderiza las estadísticas completas
      */
     renderStats() {
         const stats = this.model.getStats();
+        
+        // Contadores básicos
         this.elements.pendingCount.textContent = stats.pending;
         this.elements.completedCount.textContent = stats.completed;
+        
+        // Panel de estadísticas
+        if (this.elements.statTotal) {
+            this.elements.statTotal.textContent = stats.total;
+        }
+        if (this.elements.statCompletion) {
+            this.elements.statCompletion.textContent = `${stats.completionPercentage}%`;
+        }
+        if (this.elements.statHigh) {
+            this.elements.statHigh.textContent = stats.highPriority;
+        }
+        if (this.elements.statMedium) {
+            this.elements.statMedium.textContent = stats.mediumPriority;
+        }
+        if (this.elements.statLow) {
+            this.elements.statLow.textContent = stats.lowPriority;
+        }
+        if (this.elements.statOverdue) {
+            this.elements.statOverdue.textContent = stats.overdueTasks;
+        }
+        if (this.elements.progressBar) {
+            this.elements.progressBar.style.width = `${stats.completionPercentage}%`;
+        }
+    }
+
+    /**
+     * Renderiza la lista de etiquetas disponibles
+     */
+    renderTagsList() {
+        if (!this.elements.tagsList) return;
+        
+        const allTags = this.model.getAllTags();
+        
+        if (allTags.length === 0) {
+            this.elements.tagsList.innerHTML = '<span class="no-tags">Sin etiquetas</span>';
+            return;
+        }
+        
+        this.elements.tagsList.innerHTML = allTags.map(tag => `
+            <button class="tag-filter-btn ${this.currentTagFilter === tag ? 'active' : ''}" data-tag="${this.escapeHTML(tag)}">
+                ${this.escapeHTML(tag)}
+            </button>
+        `).join('');
+        
+        // Vincular eventos de click
+        this.elements.tagsList.querySelectorAll('.tag-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.handleTagFilter(btn.dataset.tag);
+            });
+        });
     }
 
     /**
@@ -590,18 +886,52 @@ class TodoApp {
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         
         if (diffDays === 0) {
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-            return `Hoy a las ${hours}:${minutes}`;
+            const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+            if (diffHours === 0) {
+                const diffMinutes = Math.floor(diffTime / (1000 * 60));
+                if (diffMinutes < 1) return 'Ahora';
+                return `Hace ${diffMinutes} min`;
+            }
+            return `Hace ${diffHours}h`;
         } else if (diffDays === 1) {
             return 'Ayer';
         } else if (diffDays < 7) {
-            return `Hace ${diffDays} días`;
+            return `Hace ${diffDays} dias`;
         } else {
-            const day = date.getDate().toString().padStart(2, '0');
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}/${month}/${year}`;
+            return date.toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'short'
+            });
+        }
+    }
+
+    /**
+     * Formatea la fecha límite
+     * @param {string} isoDate - Fecha en formato ISO
+     * @returns {string} Fecha formateada
+     */
+    formatDueDate(isoDate) {
+        const date = new Date(isoDate);
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        date.setHours(0, 0, 0, 0);
+        
+        const diffTime = date - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) {
+            return `Vencio hace ${Math.abs(diffDays)} dia${Math.abs(diffDays) > 1 ? 's' : ''}`;
+        } else if (diffDays === 0) {
+            return 'Vence hoy';
+        } else if (diffDays === 1) {
+            return 'Vence manana';
+        } else if (diffDays <= 7) {
+            return `Vence en ${diffDays} dias`;
+        } else {
+            return date.toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'short'
+            });
         }
     }
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Gestor de Tareas - Aplicación moderna para organizar tus tareas diarias">
+    <meta name="description" content="Gestor de Tareas - Aplicacion moderna para organizar tus tareas diarias">
     <meta name="theme-color" content="#0f0f0f">
     <title>TaskFlow - Gestor de Tareas</title>
     
@@ -26,8 +26,70 @@
         <!-- Header -->
         <header class="app-header">
             <h1 class="app-title">TaskFlow</h1>
-            <p class="app-subtitle">Organiza tu día, alcanza tus metas</p>
+            <p class="app-subtitle">Organiza tu dia, alcanza tus metas</p>
         </header>
+
+        <!-- Panel de Estadisticas -->
+        <div id="statsPanel" class="stats-panel">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Total</span>
+                    <span id="statTotal" class="stat-value">0</span>
+                </div>
+                <div class="stat-card highlight">
+                    <span class="stat-label">Completadas</span>
+                    <span id="statCompletion" class="stat-value">0%</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label priority-high-label">Alta</span>
+                    <span id="statHigh" class="stat-value priority-high-value">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label priority-medium-label">Media</span>
+                    <span id="statMedium" class="stat-value priority-medium-value">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label priority-low-label">Baja</span>
+                    <span id="statLow" class="stat-value priority-low-value">0</span>
+                </div>
+                <div class="stat-card warning-card">
+                    <span class="stat-label">Vencidas</span>
+                    <span id="statOverdue" class="stat-value overdue-value">0</span>
+                </div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar-bg">
+                    <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buscador -->
+        <div class="search-container">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+                type="text" 
+                id="searchInput" 
+                class="search-input" 
+                placeholder="Buscar tareas o etiquetas..."
+                autocomplete="off"
+                aria-label="Buscar tareas"
+            >
+        </div>
+
+        <!-- Etiquetas disponibles -->
+        <div class="tags-filter-container">
+            <div class="tags-header">
+                <span class="tags-label">Etiquetas:</span>
+                <button id="clearTagFilter" class="clear-tag-btn hidden">Limpiar filtro</button>
+            </div>
+            <div id="tagsList" class="tags-list">
+                <span class="no-tags">Sin etiquetas</span>
+            </div>
+        </div>
 
         <!-- Formulario para agregar tareas -->
         <form id="taskForm" class="task-form">
@@ -36,7 +98,7 @@
                     type="text" 
                     id="taskInput" 
                     class="task-input" 
-                    placeholder="¿Qué necesitas hacer hoy?"
+                    placeholder="Que necesitas hacer hoy?"
                     maxlength="500"
                     autocomplete="off"
                     aria-label="Nueva tarea"
@@ -46,10 +108,27 @@
                     class="priority-select"
                     aria-label="Prioridad de la tarea"
                 >
-                    <option value="alta">🔴 Alta</option>
-                    <option value="media" selected>🟡 Media</option>
-                    <option value="baja">🔵 Baja</option>
+                    <option value="alta">Alta</option>
+                    <option value="media" selected>Media</option>
+                    <option value="baja">Baja</option>
                 </select>
+            </div>
+            <div class="input-group secondary">
+                <input 
+                    type="date" 
+                    id="dueDateInput" 
+                    class="due-date-input"
+                    aria-label="Fecha limite"
+                >
+                <input 
+                    type="text" 
+                    id="tagsInput" 
+                    class="tags-input" 
+                    placeholder="Etiquetas (separadas por coma)"
+                    maxlength="100"
+                    autocomplete="off"
+                    aria-label="Etiquetas"
+                >
                 <button type="submit" class="add-btn" aria-label="Agregar tarea">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -60,7 +139,7 @@
             </div>
         </form>
 
-        <!-- Filtros y estadísticas -->
+        <!-- Filtros y estadisticas -->
         <div class="filters-container">
             <div class="filter-buttons" role="group" aria-label="Filtros de tareas">
                 <button class="filter-btn active" data-filter="all">Todas</button>
@@ -85,10 +164,10 @@
         <div id="tasksContainer" class="tasks-container">
             <!-- Lista de tareas -->
             <ul id="taskList" class="task-list" aria-label="Lista de tareas">
-                <!-- Las tareas se renderizan dinámicamente -->
+                <!-- Las tareas se renderizan dinamicamente -->
             </ul>
 
-            <!-- Estado vacío -->
+            <!-- Estado vacio -->
             <div id="emptyState" class="empty-state hidden">
                 <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
@@ -107,7 +186,7 @@
         </div>
     </div>
 
-    <!-- Modal de confirmación -->
+    <!-- Modal de confirmacion -->
     <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal">
             <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -115,8 +194,8 @@
                 <line x1="12" y1="9" x2="12" y2="13"></line>
                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
             </svg>
-            <h2 id="modalTitle" class="modal-title">¿Estás seguro?</h2>
-            <p id="modalMessage" class="modal-message">Esta acción no se puede deshacer.</p>
+            <h2 id="modalTitle" class="modal-title">Estas seguro?</h2>
+            <p id="modalMessage" class="modal-message">Esta accion no se puede deshacer.</p>
             <div class="modal-actions">
                 <button id="modalCancel" class="modal-btn cancel">Cancelar</button>
                 <button id="modalConfirm" class="modal-btn confirm">Confirmar</button>

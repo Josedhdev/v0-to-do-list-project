@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TodoModel - Pruebas Unitarias</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: #6366f1;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 2rem;
+        }
+        
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .summary-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid #333;
+        }
+        
+        .summary-card.total { border-left: 4px solid #6366f1; }
+        .summary-card.passed { border-left: 4px solid #22c55e; }
+        .summary-card.failed { border-left: 4px solid #ef4444; }
+        .summary-card.rate { border-left: 4px solid #f59e0b; }
+        
+        .summary-label {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .summary-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+        
+        .summary-card.total .summary-value { color: #6366f1; }
+        .summary-card.passed .summary-value { color: #22c55e; }
+        .summary-card.failed .summary-value { color: #ef4444; }
+        .summary-card.rate .summary-value { color: #f59e0b; }
+        
+        .test-group {
+            background: #1a1a1a;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid #333;
+            overflow: hidden;
+        }
+        
+        .group-header {
+            padding: 1rem 1.5rem;
+            background: #252525;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+        
+        .group-header:hover {
+            background: #2a2a2a;
+        }
+        
+        .group-icon {
+            font-size: 1.2rem;
+        }
+        
+        .group-count {
+            margin-left: auto;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .test-list {
+            list-style: none;
+        }
+        
+        .test-item {
+            padding: 0.75rem 1.5rem;
+            border-top: 1px solid #333;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+        }
+        
+        .test-item.passed .test-status {
+            color: #22c55e;
+        }
+        
+        .test-item.failed .test-status {
+            color: #ef4444;
+        }
+        
+        .test-item.failed {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .test-error {
+            font-size: 0.8rem;
+            color: #ef4444;
+            margin-top: 0.25rem;
+            padding-left: 1.5rem;
+        }
+        
+        .progress-bar-container {
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e, #4ade80);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .running {
+            text-align: center;
+            padding: 2rem;
+            color: #888;
+        }
+        
+        .running .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #333;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .all-passed {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .all-passed h2 {
+            color: #22c55e;
+            margin-bottom: 0.5rem;
+        }
+        
+        .has-failures {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .has-failures h2 {
+            color: #ef4444;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (max-width: 640px) {
+            .summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            body {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pruebas Unitarias - TodoModel</h1>
+        <p class="subtitle">Validacion de la logica de negocio</p>
+        
+        <div id="running" class="running">
+            <div class="spinner"></div>
+            <p>Ejecutando pruebas...</p>
+        </div>
+        
+        <div id="results" style="display: none;">
+            <div class="progress-bar-container">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            
+            <div id="statusMessage"></div>
+            
+            <div class="summary">
+                <div class="summary-card total">
+                    <div class="summary-label">Total</div>
+                    <div id="totalCount" class="summary-value">0</div>
+                </div>
+                <div class="summary-card passed">
+                    <div class="summary-label">Pasadas</div>
+                    <div id="passedCount" class="summary-value">0</div>
+                </div>
+                <div class="summary-card failed">
+                    <div class="summary-label">Fallidas</div>
+                    <div id="failedCount" class="summary-value">0</div>
+                </div>
+                <div class="summary-card rate">
+                    <div class="summary-label">Tasa</div>
+                    <div id="rateValue" class="summary-value">0%</div>
+                </div>
+            </div>
+            
+            <div id="testGroups"></div>
+        </div>
+    </div>
+    
+    <script src="todoModel.js"></script>
+    <script>
+        // Override console.log para capturar la salida de las pruebas
+        const groups = {};
+        let currentGroup = 'General';
+        
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            
+            const text = args.join(' ');
+            
+            // Detectar grupo
+            if (text.includes('📋')) {
+                currentGroup = text.replace('📋', '').trim();
+                if (!groups[currentGroup]) {
+                    groups[currentGroup] = [];
+                }
+            }
+            // Detectar test pasado
+            else if (text.includes('✅')) {
+                const description = text.replace('✅', '').trim();
+                groups[currentGroup].push({ description, passed: true });
+            }
+            // Detectar test fallido
+            else if (text.includes('❌')) {
+                const description = text.replace('❌', '').trim();
+                groups[currentGroup].push({ description, passed: false, error: '' });
+            }
+            // Detectar error
+            else if (text.includes('Error:')) {
+                const lastTest = groups[currentGroup][groups[currentGroup].length - 1];
+                if (lastTest) {
+                    lastTest.error = text.replace('Error:', '').trim();
+                }
+            }
+        };
+        
+        // Ejecutar las pruebas
+        function runTests() {
+            // Las pruebas se ejecutan automaticamente cuando se carga todoModel.test.js
+        }
+        
+        // Mostrar resultados
+        function displayResults() {
+            document.getElementById('running').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            
+            let total = 0;
+            let passed = 0;
+            let failed = 0;
+            
+            Object.values(groups).forEach(tests => {
+                tests.forEach(test => {
+                    total++;
+                    if (test.passed) passed++;
+                    else failed++;
+                });
+            });
+            
+            const rate = total > 0 ? Math.round((passed / total) * 100) : 0;
+            
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('passedCount').textContent = passed;
+            document.getElementById('failedCount').textContent = failed;
+            document.getElementById('rateValue').textContent = rate + '%';
+            document.getElementById('progressBar').style.width = rate + '%';
+            
+            const statusEl = document.getElementById('statusMessage');
+            if (failed === 0) {
+                statusEl.innerHTML = `
+                    <div class="all-passed">
+                        <h2>🎉 Todas las pruebas pasaron!</h2>
+                        <p>La logica de negocio funciona correctamente.</p>
+                    </div>
+                `;
+            } else {
+                statusEl.innerHTML = `
+                    <div class="has-failures">
+                        <h2>⚠️ Algunas pruebas fallaron</h2>
+                        <p>Revisa los errores a continuacion.</p>
+                    </div>
+                `;
+            }
+            
+            const groupsContainer = document.getElementById('testGroups');
+            
+            Object.entries(groups).forEach(([groupName, tests]) => {
+                const groupPassed = tests.filter(t => t.passed).length;
+                const groupTotal = tests.length;
+                
+                const groupEl = document.createElement('div');
+                groupEl.className = 'test-group';
+                
+                groupEl.innerHTML = `
+                    <div class="group-header">
+                        <span class="group-icon">${groupPassed === groupTotal ? '✅' : '⚠️'}</span>
+                        <span>${groupName}</span>
+                        <span class="group-count">${groupPassed}/${groupTotal}</span>
+                    </div>
+                    <ul class="test-list">
+                        ${tests.map(test => `
+                            <li class="test-item ${test.passed ? 'passed' : 'failed'}">
+                                <span class="test-status">${test.passed ? '✓' : '✗'}</span>
+                                <span class="test-description">${test.description}</span>
+                            </li>
+                            ${test.error ? `<div class="test-error">${test.error}</div>` : ''}
+                        `).join('')}
+                    </ul>
+                `;
+                
+                groupsContainer.appendChild(groupEl);
+            });
+        }
+        
+        // Esperar a que las pruebas terminen
+        setTimeout(displayResults, 1000);
+    </script>
+    <script src="todoModel.test.js"></script>
+</body>
+</html>
