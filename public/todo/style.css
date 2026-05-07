@@ -1,6 +1,7 @@
 /**
- * Estilos personalizados para la aplicación To-Do List
- * Complementa Tailwind CSS con animaciones y estilos específicos
+ * Estilos personalizados para la aplicacion To-Do List
+ * Complementa Tailwind CSS con animaciones y estilos especificos
+ * @version 2.0.0
  */
 
 /* ===== Variables CSS ===== */
@@ -19,6 +20,7 @@
     --priority-low: #3b82f6;
     --success: #22c55e;
     --danger: #ef4444;
+    --warning: #f59e0b;
     --border-color: #333333;
     --shadow-color: rgba(0, 0, 0, 0.3);
 }
@@ -62,7 +64,7 @@ body {
 
 /* ===== Contenedor principal ===== */
 .app-container {
-    max-width: 680px;
+    max-width: 720px;
     margin: 0 auto;
     padding: 2rem 1rem;
 }
@@ -94,11 +96,198 @@ body {
     font-size: 1rem;
 }
 
+/* ===== Panel de Estadisticas ===== */
+.stats-panel {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+    .stats-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+.stat-card {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.stat-card.highlight {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.stat-card.warning-card {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.priority-high-label { color: var(--priority-high); }
+.priority-medium-label { color: var(--priority-medium); }
+.priority-low-label { color: var(--priority-low); }
+.priority-high-value { color: var(--priority-high); }
+.priority-medium-value { color: var(--priority-medium); }
+.priority-low-value { color: var(--priority-low); }
+.overdue-value { color: var(--danger); }
+
+.progress-container {
+    margin-top: 0.5rem;
+}
+
+.progress-bar-bg {
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-primary), var(--success));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+/* ===== Buscador ===== */
+.search-container {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 3rem;
+    background: var(--bg-secondary);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* ===== Filtro de Etiquetas ===== */
+.tags-filter-container {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.tags-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.tags-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.clear-tag-btn {
+    font-size: 0.75rem;
+    color: var(--accent-primary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.clear-tag-btn:hover {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.no-tags {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.tag-filter-btn {
+    padding: 0.375rem 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tag-filter-btn:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.tag-filter-btn.active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
 /* ===== Formulario de entrada ===== */
 .task-form {
     background: var(--bg-secondary);
     border-radius: 16px;
-    padding: 1.5rem;
+    padding: 1.25rem;
     margin-bottom: 1.5rem;
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 20px var(--shadow-color);
@@ -107,7 +296,11 @@ body {
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
+}
+
+.input-group.secondary {
+    margin-top: 0.75rem;
 }
 
 @media (min-width: 640px) {
@@ -145,7 +338,7 @@ body {
     color: var(--text-primary);
     font-size: 0.9rem;
     cursor: pointer;
-    min-width: 140px;
+    min-width: 120px;
     transition: all 0.3s ease;
 }
 
@@ -157,6 +350,48 @@ body {
 .priority-select option {
     background: var(--bg-secondary);
     color: var(--text-primary);
+}
+
+.due-date-input {
+    padding: 0.875rem 1rem;
+    background: var(--bg-tertiary);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    min-width: 150px;
+    transition: all 0.3s ease;
+}
+
+.due-date-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+/* Fix para el color del icono de calendario en dark mode */
+.due-date-input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+.tags-input {
+    flex: 1;
+    padding: 0.875rem 1rem;
+    background: var(--bg-tertiary);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.tags-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.tags-input::placeholder {
+    color: var(--text-muted);
 }
 
 .add-btn {
@@ -186,7 +421,7 @@ body {
     transform: translateY(0);
 }
 
-/* ===== Filtros y estadísticas ===== */
+/* ===== Filtros y estadisticas ===== */
 .filters-container {
     display: flex;
     flex-direction: column;
@@ -282,11 +517,12 @@ body {
 .task-item {
     display: flex;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 0.75rem;
     padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--border-color);
     transition: all 0.3s ease;
     animation: slideIn 0.3s ease;
+    position: relative;
 }
 
 .task-item:last-child {
@@ -312,6 +548,42 @@ body {
 
 .task-item.editing {
     background: var(--bg-tertiary);
+}
+
+/* Drag and Drop styles */
+.task-item.dragging {
+    opacity: 0.5;
+    background: var(--bg-tertiary);
+}
+
+.task-item.drag-over {
+    border-top: 2px solid var(--accent-primary);
+    padding-top: calc(1rem - 2px);
+}
+
+.drag-handle {
+    cursor: grab;
+    padding: 0.25rem;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    margin-top: 0.125rem;
+}
+
+.task-item:hover .drag-handle {
+    opacity: 1;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+@media (max-width: 640px) {
+    .drag-handle {
+        opacity: 0.5;
+    }
 }
 
 /* Checkbox personalizado */
@@ -421,14 +693,53 @@ body {
     color: var(--priority-low);
 }
 
-/* Indicador de prioridad lateral */
-.priority-indicator {
-    width: 4px;
-    height: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    border-radius: 4px 0 0 4px;
+/* Fecha limite */
+.due-date {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    font-size: 0.7rem;
+}
+
+.due-date.overdue {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+}
+
+.due-date.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--warning);
+}
+
+/* Etiquetas en tareas */
+.task-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-top: 0.5rem;
+}
+
+.task-tag {
+    padding: 0.2rem 0.5rem;
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 4px;
+    font-size: 0.65rem;
+    color: var(--accent-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.task-tag:hover {
+    background: rgba(99, 102, 241, 0.25);
+}
+
+.task-tag.active {
+    background: var(--accent-primary);
+    color: white;
 }
 
 /* Acciones de tarea */
@@ -477,7 +788,7 @@ body {
     height: 16px;
 }
 
-/* Input de edición */
+/* Input de edicion */
 .edit-input {
     flex: 1;
     padding: 0.5rem 0.75rem;
@@ -497,7 +808,7 @@ body {
     gap: 0.5rem;
 }
 
-/* ===== Estado vacío ===== */
+/* ===== Estado vacio ===== */
 .empty-state {
     padding: 4rem 2rem;
     text-align: center;
@@ -549,7 +860,7 @@ body {
     background: rgba(239, 68, 68, 0.1);
 }
 
-/* ===== Modal de confirmación ===== */
+/* ===== Modal de confirmacion ===== */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -639,7 +950,7 @@ body {
     background: #dc2626;
 }
 
-/* ===== Toast de notificación ===== */
+/* ===== Toast de notificacion ===== */
 .toast-container {
     position: fixed;
     bottom: 2rem;
@@ -786,6 +1097,11 @@ body {
     }
 }
 
+/* ===== Utilidades ===== */
+.hidden {
+    display: none !important;
+}
+
 /* ===== Responsive adjustments ===== */
 @media (max-width: 480px) {
     .app-title {
@@ -813,6 +1129,18 @@ body {
     .stats-container {
         flex-wrap: wrap;
         justify-content: center;
+    }
+    
+    .stats-panel {
+        padding: 1rem;
+    }
+    
+    .stat-card {
+        padding: 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1rem;
     }
 }
 
